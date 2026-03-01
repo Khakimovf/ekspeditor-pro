@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: ekspeditor_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017" # Exposed to host just in case, consider removing in strict production
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: secure_root_password_change_me
+    networks:
+      - ekspeditor_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ekspeditor_app
+    restart: unless-stopped
+    ports:
+      - "10000:10000"
+    environment:
+      - PORT=10000
+      - MONGODB_URI=mongodb://root:secure_root_password_change_me@mongodb:27017/ekspeditor?authSource=admin
+      - VITE_API_URL=https://factoryerp.uz
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+    networks:
+      - ekspeditor_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: ekspeditor_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    depends_on:
+      - app
+    networks:
+      - ekspeditor_network
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: certonly --webroot -w /var/www/certbot --force-renewal --email admin@factoryerp.uz -d factoryerp.uz --agree-tos
+    networks:
+      - ekspeditor_network
+
+networks:
+  ekspeditor_network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
