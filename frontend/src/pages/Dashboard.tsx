@@ -3,6 +3,7 @@ import StockList from '../components/StockList';
 import type { InventoryItem } from '../components/StockList';
 import ExcelExport from '../components/ExcelExport';
 import StockDynamicsChart from '../components/StockDynamicsChart';
+import { resilientFetch } from '../utils/api';
 
 const STATIC_FALLBACK_ITEMS: InventoryItem[] = [
   { id: '26211281', name: 'Item 1281', perBox: 100, currentStock: 0, minLimit: 50 },
@@ -29,12 +30,31 @@ function Dashboard() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [todaysOperations, setTodaysOperations] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // only true if no cache exists
+  const [isSyncing, setIsSyncing] = useState(false); // background sync state
   const [errorVisible, setErrorVisible] = useState(false);
+
+  const loadFromCache = () => {
+    const cached = localStorage.getItem('cached_inventory');
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setInventory(parsed);
+          return true;
+        }
+      } catch (e) { /* ignore */ }
+    }
+    return false;
+  };
 
   const fetchInventory = async (search?: string) => {
     try {
-      setLoading(true);
+      const hasCache = loadFromCache();
+
+      // If no cache, block UI. If cache exists, just show a minor background sync indicator.
+      if (!hasCache && !search) setLoading(true);
+      setIsSyncing(true);
       setErrorVisible(false);
 
       let fetchUrl = (import.meta.env.VITE_API_URL || '') + '/api/inventory';
@@ -42,7 +62,8 @@ function Dashboard() {
         fetchUrl += `?search=${encodeURIComponent(search)}`;
       }
 
-      const response = await fetch(fetchUrl);
+      // Use resilient fetch with 3 retries
+      const response = await resilientFetch(fetchUrl);
 
       if (!response.ok) throw new Error('API fetch failed');
       const data = await response.json();
@@ -53,7 +74,8 @@ function Dashboard() {
         throw new Error('Invalid data format returned');
       }
 
-      const historyRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/history');
+      // Chain history fetch reliably
+      const historyRes = await resilientFetch((import.meta.env.VITE_API_URL || '') + '/api/history', {}, 1);
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         const today = new Date().toISOString().split('T')[0];
@@ -64,21 +86,12 @@ function Dashboard() {
     } catch (error) {
       console.error('Failed to fetch inventory:', error);
       setErrorVisible(true);
-
-      // Fallback to local cache
-      const cached = localStorage.getItem('cached_inventory');
-      if (cached) {
-        try {
-          const parsed = JSON.parse(cached);
-          setInventory(Array.isArray(parsed) && parsed.length > 0 ? parsed : STATIC_FALLBACK_ITEMS);
-        } catch (e) {
-          setInventory(STATIC_FALLBACK_ITEMS);
-        }
-      } else {
+      if (!loadFromCache()) {
         setInventory(STATIC_FALLBACK_ITEMS);
       }
     } finally {
       setLoading(false);
+      setIsSyncing(false);
     }
   };
 
@@ -121,12 +134,20 @@ function Dashboard() {
             <span className="absolute left-3 top-3.5 text-slate-400 text-xl">🔍</span>
           </div>
 
-          {errorVisible && (
-            <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-400 px-4 py-3 rounded-xl flex items-center gap-2 shadow-sm animate-pulse">
-              <span>⚠️</span>
-              <span className="text-sm font-bold">Baza bilan aloqa uzildi. Keshdan o'qilmoqda.</span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {isSyncing && !loading && (
+              <div className="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 animate-pulse border border-indigo-100 dark:border-indigo-800">
+                <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                Serverga ulanilmoqda...
+              </div>
+            )}
+            {errorVisible && !isSyncing && (
+              <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-400 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm animate-pulse whitespace-nowrap">
+                <span>⚠️</span>
+                <span className="text-sm font-bold">Baza bilan aloqa uzildi. Keshdan o'qilmoqda.</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Top Info Bar */}

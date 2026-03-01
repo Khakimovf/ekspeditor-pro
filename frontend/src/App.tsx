@@ -8,6 +8,8 @@ import HistoryPage from './pages/HistoryPage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 
+import { useEffect } from 'react';
+
 // Route Guard Component
 function PrivateRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -15,6 +17,18 @@ function PrivateRoute({ children }: { children: ReactNode }) {
 }
 
 function App() {
+  // Keep-Alive Ping for Render Free Tier (every 5 minutes)
+  useEffect(() => {
+    const pingServer = () => {
+      fetch((import.meta.env.VITE_API_URL || '') + '/api/health').catch(() => {
+        // silent fail
+      });
+    };
+    pingServer(); // Initial ping
+    const interval = setInterval(pingServer, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <AuthProvider>
       <BrowserRouter>

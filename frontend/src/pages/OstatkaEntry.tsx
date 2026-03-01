@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import VoiceInput from '../components/VoiceInput';
+import { resilientFetch } from '../utils/api';
 
 interface Item {
     id: string;
@@ -40,7 +41,8 @@ const STATIC_FALLBACK_ITEMS: Item[] = [
 
 export default function OstatkaEntry() {
     const [items, setItems] = useState<Item[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
 
     // Split Input State
     const [inputId, setInputId] = useState('');
@@ -55,16 +57,32 @@ export default function OstatkaEntry() {
     const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
     const [errorVisible, setErrorVisible] = useState(false);
 
+    const loadFromCache = () => {
+        const cached = localStorage.getItem('cached_inventory');
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    setItems(parsed);
+                    return true;
+                }
+            } catch (e) { /* ignore */ }
+        }
+        return false;
+    };
+
     useEffect(() => {
         const fetchAll = async () => {
-            setLoading(true);
+            const hasCache = loadFromCache();
+            if (!hasCache) setLoading(true);
+            setIsSyncing(true);
             setErrorVisible(false);
 
             try {
-                const iRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory');
+                const iRes = await resilientFetch((import.meta.env.VITE_API_URL || '') + '/api/inventory');
                 const inventoryData = await iRes.json();
 
-                const hRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/history');
+                const hRes = await resilientFetch((import.meta.env.VITE_API_URL || '') + '/api/history', {}, 1);
                 const historyData = await hRes.json();
 
                 if (Array.isArray(inventoryData)) {
@@ -79,20 +97,12 @@ export default function OstatkaEntry() {
             } catch (err) {
                 console.error("Data fetch failed:", err);
                 setErrorVisible(true);
-
-                const cached = localStorage.getItem('cached_inventory');
-                if (cached) {
-                    try {
-                        const parsed = JSON.parse(cached);
-                        setItems(Array.isArray(parsed) && parsed.length > 0 ? parsed : STATIC_FALLBACK_ITEMS);
-                    } catch (e) {
-                        setItems(STATIC_FALLBACK_ITEMS);
-                    }
-                } else {
+                if (!loadFromCache()) {
                     setItems(STATIC_FALLBACK_ITEMS);
                 }
             } finally {
                 setLoading(false);
+                setIsSyncing(false);
             }
         };
 
@@ -262,12 +272,20 @@ export default function OstatkaEntry() {
                         <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Professional Dispetcher Kiritish Tizimi</p>
                     </div>
                 </div>
-                {errorVisible && (
-                    <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-400 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm animate-pulse">
-                        <span>⚠️</span>
-                        <span className="text-xs font-bold">Baza aloqasi yo'q. Kesh.</span>
-                    </div>
-                )}
+                <div className="flex items-center gap-3">
+                    {isSyncing && !loading && (
+                        <div className="bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 animate-pulse border border-indigo-100 dark:border-indigo-800">
+                            <div className="w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                            Baza bilan ulanilmoqda...
+                        </div>
+                    )}
+                    {errorVisible && !isSyncing && (
+                        <div className="bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-400 px-4 py-2 rounded-xl flex items-center gap-2 shadow-sm animate-pulse whitespace-nowrap">
+                            <span>⚠️</span>
+                            <span className="text-xs font-bold">Baza aloqasi yo'q.</span>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {loading ? (
