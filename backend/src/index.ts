@@ -1,5 +1,6 @@
 ﻿import express from 'express';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
@@ -9,7 +10,10 @@ import History from './models/History';
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 10000;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(cors({
   origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:3000'] : '*',
@@ -358,11 +362,11 @@ app.put('/api/inventory/:id', async (req, res) => {
   }
 });
 
-app.use(express.static(path.join(process.cwd(), '../frontend/dist')));
+app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 app.get('*', (req, res) => {
-  res.sendFile(path.join(process.cwd(), '../frontend/dist/index.html'));
+  res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
 });
 
-app.listen(port, () => {
-  console.log(`Backend server listening at http://localhost:${port}`);
+app.listen(port as number, '0.0.0.0', () => {
+  console.log(`Backend server listening at http://0.0.0.0:${port}`);
 });
