@@ -1,4 +1,5 @@
 ﻿import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
@@ -355,6 +356,11 @@ app.put('/api/inventory/:id', async (req, res) => {
     console.error(error);
     res.status(500).json({ error: 'Failed to update item settings' });
   }
+});
+
+app.use(express.static(path.join(process.cwd(), '../frontend/dist')));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(process.cwd(), '../frontend/dist/index.html'));
 });
 
 app.listen(port, () => {
