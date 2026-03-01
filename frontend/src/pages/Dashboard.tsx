@@ -40,7 +40,7 @@ function Dashboard() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 sec timeout
 
-      const url = new URL('http://localhost:5000/api/inventory');
+      const url = new URL((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/inventory');
       if (search) {
         url.searchParams.append('search', search);
       }
@@ -57,7 +57,7 @@ function Dashboard() {
         throw new Error('Empty database returned');
       }
 
-      const historyRes = await fetch('http://localhost:5000/api/history', { signal: AbortSignal.timeout(3000) });
+      const historyRes = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/history', { signal: AbortSignal.timeout(3000) });
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         const today = new Date().toISOString().split('T')[0];
