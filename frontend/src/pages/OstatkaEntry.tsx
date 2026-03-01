@@ -61,10 +61,10 @@ export default function OstatkaEntry() {
             setErrorVisible(false);
 
             try {
-                const iRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory', { signal: AbortSignal.timeout(3000) });
+                const iRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory');
                 const inventoryData = await iRes.json();
 
-                const hRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/history', { signal: AbortSignal.timeout(3000) });
+                const hRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/history');
                 const historyData = await hRes.json();
 
                 if (Array.isArray(inventoryData)) {

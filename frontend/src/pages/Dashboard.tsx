@@ -37,16 +37,12 @@ function Dashboard() {
       setLoading(true);
       setErrorVisible(false);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 sec timeout
-
       let fetchUrl = (import.meta.env.VITE_API_URL || '') + '/api/inventory';
       if (search) {
         fetchUrl += `?search=${encodeURIComponent(search)}`;
       }
 
-      const response = await fetch(fetchUrl, { signal: controller.signal });
-      clearTimeout(timeoutId);
+      const response = await fetch(fetchUrl);
 
       if (!response.ok) throw new Error('API fetch failed');
       const data = await response.json();
@@ -57,7 +53,7 @@ function Dashboard() {
         throw new Error('Invalid data format returned');
       }
 
-      const historyRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/history', { signal: AbortSignal.timeout(3000) });
+      const historyRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/history');
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         const today = new Date().toISOString().split('T')[0];
