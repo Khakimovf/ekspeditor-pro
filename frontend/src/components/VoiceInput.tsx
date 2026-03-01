@@ -19,7 +19,6 @@ const parseUzbekToDigits = (text: string) => {
         'ming': 1000
     };
 
-    // Normalize quotes for Uzbek words like to'rt
     let normalized = text.toLowerCase().replace(/[`’]/g, "'").replace(/[^\w\s']/g, '');
     let words = normalized.split(/\s+/);
     let result = '';
@@ -59,7 +58,14 @@ const parseUzbekToDigits = (text: string) => {
         result += currentNumber;
     }
 
-    return result.trim();
+    // AI Engine: Extra Regex filtering to guarantee only digits emerge from parsed chunks
+    const finalClean = result.trim().replace(/[a-zA-Z]+/g, (match) => {
+        // preserve specific keywords, optionally remove rest
+        if (['kirim', 'chiqim', 'saqlash', 'in', 'out', 'set'].includes(match.toLowerCase())) return match;
+        return '';
+    }).replace(/\s+/g, ' ').trim();
+
+    return finalClean;
 };
 
 const VoiceInput: React.FC<VoiceInputProps> = ({ onCommandParsed }) => {
@@ -124,10 +130,16 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onCommandParsed }) => {
         const isKirim = text.includes('kirim') || text.includes('qo\'shish') || text.includes('plyus') || text.includes('in');
         const isChiqim = text.includes('chiqim') || text.includes('olish') || text.includes('minus') || text.includes('out') || text.includes('chiqarib');
         const isSet = text.includes('set') || text.includes('o\'rnatish') || text.includes('teng') || text.includes('ostatka');
+        const isSaqlash = text.includes('saqlash') || text.includes('submit');
 
         if (!numbers || numbers.length < 2) {
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            setFeedback(`Tushunilmadi: "${rawText}" -> [${text}]`);
+
+            // Audio prompt for low confidence
+            const audio = new Audio('/error.mp3'); // Fallback to silent fail if missing
+            audio.play().catch(() => { });
+
+            setFeedback(`Tushunmadim, qaytaring`);
             setTimeout(() => setFeedback(''), 4000);
             return;
         }
@@ -147,21 +159,31 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onCommandParsed }) => {
         if (isKirim) mode = 'IN';
 
         if (navigator.vibrate) navigator.vibrate([200]);
-        setFeedback(`AI: ID ${id}, Karobka ${boxes}, Rejim ${mode}`);
-        setTimeout(() => setFeedback(''), 4000);
+        setFeedback(`✅ Qabul qilindi:\nID ${id} | ${boxes} karobka | ${mode}`);
+
+        // Execute the parsed command
         onCommandParsed(id, boxes, mode);
+
+        // Auto trigger submit if keyword perceived
+        if (isSaqlash) {
+            setTimeout(() => {
+                document.dispatchEvent(new Event('voice-submit'));
+            }, 800);
+        }
+
+        setTimeout(() => setFeedback(''), 3000);
     };
 
     return (
         <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50 flex flex-col items-end">
             {/* Real-time Transcription Floating Bubble */}
             {isListening && (transcript || feedback) && (
-                <div className="mb-4 bg-slate-900/95 dark:bg-black/95 backdrop-blur-md px-5 py-3 rounded-2xl shadow-2xl border border-indigo-500/30 text-right animate-in fade-in slide-in-from-bottom-2 duration-300 max-w-xs sm:max-w-sm pointer-events-none transform origin-bottom-right">
+                <div className={`mb-4 bg-slate-900/95 dark:bg-black/95 backdrop-blur-md px-5 py-3 rounded-2xl shadow-2xl border ${feedback.includes('✅') ? 'border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.8)]' : 'border-indigo-500/30'} text-right animate-in fade-in slide-in-from-bottom-2 duration-300 max-w-xs sm:max-w-sm pointer-events-none transform origin-bottom-right transition-all`}>
                     {transcript && (
                         <div className="text-white/90 italic text-sm mb-1 font-medium break-words">"{transcript}"</div>
                     )}
                     {feedback && (
-                        <div className={`font-bold text-xs sm:text-sm bg-gradient-to-r bg-clip-text text-transparent break-words ${feedback.startsWith('Xatolik') || feedback.startsWith('Tushunilmadi') ? 'from-red-400 to-rose-400' : 'from-indigo-400 to-cyan-400'}`}>
+                        <div className={`font-bold text-xs sm:text-sm bg-gradient-to-r bg-clip-text text-transparent break-words whitespace-pre-wrap ${feedback.startsWith('Xatolik') || feedback.includes('Tushunmadim') ? 'from-red-400 to-rose-400' : 'from-indigo-400 to-cyan-400'} ${feedback.includes('✅') ? '!from-emerald-300 !to-emerald-500 text-base drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]' : ''}`}>
                             {feedback === 'Listening...' ? 'Aytishingizni kutyapman...' : feedback}
                         </div>
                     )}
@@ -173,8 +195,8 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onCommandParsed }) => {
                 onClick={toggleListen}
                 aria-label="Ovozli kiritish"
                 className={`flex items-center justify-center rounded-full transition-all duration-300 transform overflow-hidden focus:outline-none focus:ring-4 focus:ring-indigo-500/30 shadow-2xl ${isListening
-                        ? 'w-16 h-16 sm:w-20 sm:h-20 scale-105 shadow-[0_0_40px_rgba(99,102,241,0.5)] bg-slate-900 border-2 border-indigo-500/50'
-                        : 'w-14 h-14 sm:w-16 sm:h-16 hover:scale-105 hover:-translate-y-1 shadow-indigo-900/20 bg-gradient-to-tr from-indigo-600 to-violet-600 active:scale-95'
+                    ? 'w-16 h-16 sm:w-20 sm:h-20 scale-105 shadow-[0_0_40px_rgba(99,102,241,0.5)] bg-slate-900 border-2 border-indigo-500/50'
+                    : 'w-14 h-14 sm:w-16 sm:h-16 hover:scale-105 hover:-translate-y-1 shadow-indigo-900/20 bg-gradient-to-tr from-indigo-600 to-violet-600 active:scale-95'
                     }`}
             >
                 {isListening ? (

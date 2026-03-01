@@ -127,6 +127,17 @@ export default function OstatkaEntry() {
         }
     }, [inputId]);
 
+    // Handle voice saqlash trigger
+    useEffect(() => {
+        const handleVoiceSubmit = () => {
+            submitEntry();
+        };
+        document.addEventListener('voice-submit', handleVoiceSubmit);
+        return () => {
+            document.removeEventListener('voice-submit', handleVoiceSubmit);
+        };
+    }, [inputId, inputQty, inputMode, items]); // dependencies needed to capture current state on submit
+
     // Derived Preview Item
     const previewItem = items.find((i) => i.id === inputId || i.id.endsWith(inputId));
 
