@@ -61,10 +61,10 @@ export default function OstatkaEntry() {
             setErrorVisible(false);
 
             try {
-                const iRes = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/inventory', { signal: AbortSignal.timeout(3000) });
+                const iRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory', { signal: AbortSignal.timeout(3000) });
                 const inventoryData = await iRes.json();
 
-                const hRes = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/history', { signal: AbortSignal.timeout(3000) });
+                const hRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/history', { signal: AbortSignal.timeout(3000) });
                 const historyData = await hRes.json();
 
                 if (Array.isArray(inventoryData) && inventoryData.length > 0) {
@@ -157,7 +157,7 @@ export default function OstatkaEntry() {
 
         const pieces = qBoxes * previewItem.perBox;
 
-        fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/inventory/command', {
+        fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory/command', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: previewItem.id, type: inputMode, totalPieces: pieces, boxes: qBoxes })
@@ -202,7 +202,7 @@ export default function OstatkaEntry() {
             // 2. Auto-submit after a brief visual delay so user sees the fields populated
             setTimeout(() => {
                 const pieces = voicedBoxes * item.perBox;
-                fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/inventory/command', {
+                fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory/command', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: item.id, type, totalPieces: pieces, boxes: voicedBoxes })

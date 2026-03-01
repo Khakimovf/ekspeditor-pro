@@ -37,7 +37,7 @@ export default function SettingsPage() {
     const fetchInventory = async () => {
         setLoading(true);
         try {
-            const res = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/inventory');
+            const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory');
             const data = await res.json();
             setItems(data);
         } catch (error) {
@@ -63,7 +63,7 @@ export default function SettingsPage() {
             setItems(items.map(i => i.id === id ? { ...i, ...editForm, updatedAt: new Date().toISOString() } : i));
             setEditingId(null);
 
-            const response = await fetch(`\${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/inventory/${id}`, {
+            const response = await fetch(`\${import.meta.env.VITE_API_URL || ''}/api/inventory/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(editForm)
@@ -83,7 +83,7 @@ export default function SettingsPage() {
     const handleAddItem = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/inventory', {
+            const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -115,7 +115,7 @@ export default function SettingsPage() {
         if (!window.confirm(`Barcha tovarlar uchun minimal zaxira limitini ${globalMinLimit} qilib belgilashni tasdiqlaysizmi?`)) return;
 
         try {
-            const res = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/inventory/global-limit', {
+            const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory/global-limit', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ minLimit: Number(globalMinLimit) })
@@ -144,7 +144,7 @@ export default function SettingsPage() {
         }
 
         try {
-            const res = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/inventory/reset-stock', { method: 'PUT' });
+            const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory/reset-stock', { method: 'PUT' });
             if (res.ok) {
                 alert("BARCHA ZAXIRA 0 GA TUSHIRILDI!");
                 fetchInventory();

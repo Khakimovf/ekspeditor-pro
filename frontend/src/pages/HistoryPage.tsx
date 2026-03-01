@@ -24,7 +24,7 @@ export default function HistoryPage() {
 
     const fetchHistory = () => {
         setLoading(true);
-        fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/history')
+        fetch((import.meta.env.VITE_API_URL || '') + '/api/history')
             .then(res => res.ok ? res.json() : [])
             .then(data => setHistory(Array.isArray(data) ? data : []))
             .catch(() => setHistory([]))
@@ -42,7 +42,7 @@ export default function HistoryPage() {
         if (!window.confirm("Rostdan ham ushbu amalni o'chirish va zaxirani oldingi holatiga qaytarishni xohlaysizmi?")) return;
 
         try {
-            const res = await fetch(`\${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/history/${id}`, { method: 'DELETE' });
+            const res = await fetch(`\${import.meta.env.VITE_API_URL || ''}/api/history/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 if (navigator.vibrate) navigator.vibrate([200]);
                 alert("Muvaffaqiyatli o'chirildi va zaxira tiklandi!");
