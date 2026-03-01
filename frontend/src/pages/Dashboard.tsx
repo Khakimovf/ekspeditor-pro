@@ -40,12 +40,12 @@ function Dashboard() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 sec timeout
 
-      const url = new URL((import.meta.env.VITE_API_URL || '') + '/api/inventory');
+      let fetchUrl = (import.meta.env.VITE_API_URL || '') + '/api/inventory';
       if (search) {
-        url.searchParams.append('search', search);
+        fetchUrl += `?search=${encodeURIComponent(search)}`;
       }
 
-      const response = await fetch(url.toString(), { signal: controller.signal });
+      const response = await fetch(fetchUrl, { signal: controller.signal });
       clearTimeout(timeoutId);
 
       if (!response.ok) throw new Error('API fetch failed');
