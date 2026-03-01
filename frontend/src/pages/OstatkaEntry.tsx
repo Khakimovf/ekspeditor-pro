@@ -212,45 +212,70 @@ export default function OstatkaEntry() {
         });
     };
 
-    const handleVoiceCommand = (idFragment: string, voicedBoxes: number, type: 'IN' | 'OUT' | 'SET') => {
+    const handleVoiceCommand = (idFragment: string, voicedQty: number, type: 'IN' | 'OUT' | 'SET', unit: 'box' | 'piece', autoSubmit: boolean) => {
         const item = items.find((i) => i.id === idFragment || i.id.endsWith(idFragment));
         if (item) {
+            const qBoxes = unit === 'box' ? voicedQty : parseFloat((voicedQty / item.perBox).toFixed(2));
+            const totalPieces = unit === 'piece' ? Math.round(voicedQty) : Math.round(voicedQty * item.perBox);
+
             // 1. Visually fill the inputs
             setInputId(item.id.slice(-4)); // Fill last 4 digits
-            setInputQty(voicedBoxes.toString());
+            setInputQty(qBoxes.toString());
             setInputMode(type);
 
-            // 2. Auto-submit after a brief visual delay so user sees the fields populated
-            setTimeout(() => {
-                const pieces = voicedBoxes * item.perBox;
-                fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory/command', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: item.id, type, totalPieces: pieces, boxes: voicedBoxes })
-                }).then((res) => {
-                    if (res.ok) {
-                        if (navigator.vibrate) navigator.vibrate([200]);
-                        playSuccessSound();
-                        setSuccessFlash(true);
-                        setTimeout(() => setSuccessFlash(false), 800);
+            if (autoSubmit) {
+                // 2. Auto-submit after a brief delay
+                setTimeout(() => {
+                    fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory/command', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: item.id, type, totalPieces, boxes: qBoxes })
+                    }).then(res => res.json()).then((data) => {
+                        if (data.success || data.item) {
+                            if (navigator.vibrate) navigator.vibrate([200]);
+                            playSuccessSound();
+                            setSuccessFlash(true);
+                            setTimeout(() => setSuccessFlash(false), 800);
 
-                        // Sync Dashboard
-                        window.dispatchEvent(new Event('inventory-updated'));
+                            // Calculate new total based on DB response or math
+                            const newTotal = data.item ? data.item.currentStock : (
+                                type === 'IN' ? item.currentStock + totalPieces :
+                                    type === 'OUT' ? item.currentStock - totalPieces : totalPieces
+                            );
 
-                        setRecentActivity(prev => [
-                            { _id: Date.now().toString(), itemId: item.id, boxes: voicedBoxes, timestamp: new Date().toISOString(), type: type as 'IN' | 'OUT' | 'SET' },
-                            ...prev
-                        ].slice(0, 5));
+                            // Voice Confirmation
+                            const actionWord = type === 'IN' ? "qo'shildi" : type === 'OUT' ? "ayirildi" : "o'rnatildi";
+                            const msgText = `Tovar ${item.id.slice(-4)} uchun ${voicedQty} ${unit === 'piece' ? 'dona' : 'karobka'} ${actionWord}. Jami, ${newTotal} dona.`;
+                            const speech = new SpeechSynthesisUtterance(msgText);
+                            speech.lang = 'uz-UZ';
+                            speech.rate = 1.1; // Slightly faster for efficiency
+                            window.speechSynthesis.speak(speech);
 
-                        // Clear visually after success
-                        setTimeout(() => {
-                            setInputId('');
-                            setInputQty('');
-                            idInputRef.current?.focus();
-                        }, 1000);
-                    }
-                });
-            }, 800);
+                            // Sync Dashboard
+                            window.dispatchEvent(new Event('inventory-updated'));
+
+                            // Update local items cache optimistically
+                            setItems(prev => prev.map(i => i.id === item.id ? { ...i, currentStock: newTotal } : i));
+
+                            setRecentActivity(prev => [
+                                { _id: Date.now().toString(), itemId: item.id, boxes: qBoxes, timestamp: new Date().toISOString(), type: type as 'IN' | 'OUT' | 'SET' },
+                                ...prev
+                            ].slice(0, 5));
+
+                            // Clear visually after success
+                            setTimeout(() => {
+                                setInputId('');
+                                setInputQty('');
+                                idInputRef.current?.focus();
+                            }, 1000);
+                        } else {
+                            alert(`Xatolik: ${data.error}`);
+                        }
+                    }).catch(() => {
+                        alert("Tarmoq xatosi, ovozli buyruq amalga oshmadi.");
+                    });
+                }, 800);
+            }
         } else {
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
             alert(`ID ${idFragment} topilmadi!`);

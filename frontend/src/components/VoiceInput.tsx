@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 interface VoiceInputProps {
-    onCommandParsed: (id: string, boxes: number, type: 'IN' | 'OUT' | 'SET') => void;
+    onCommandParsed: (id: string, qty: number, type: 'IN' | 'OUT' | 'SET', unit: 'box' | 'piece', autoSubmit: boolean) => void;
     compact?: boolean;
 }
 
@@ -132,6 +132,11 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onCommandParsed }) => {
         const isSet = text.includes('set') || text.includes('o\'rnatish') || text.includes('teng') || text.includes('ostatka');
         const isSaqlash = text.includes('saqlash') || text.includes('submit');
 
+        const isDona = text.includes('dona') || text.includes('shtuk') || text.includes('ta');
+        const isExplicitBox = text.includes('karobka') || text.includes('quti') || text.includes('korobka') || text.includes('blok');
+        const unit = isDona ? 'piece' : 'box';
+        const isExplicitUnit = isDona || isExplicitBox;
+
         if (!numbers || numbers.length < 2) {
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
 
@@ -145,12 +150,12 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onCommandParsed }) => {
         }
 
         let id = numbers[0];
-        let boxes = parseInt(numbers[1], 10);
+        let qty = parseInt(numbers[1], 10);
 
         // Handle variations where number comes before ID or ID is 2nd number
         if (id.length < numbers[1].length || (parseInt(id) < parseInt(numbers[1]) && parseInt(numbers[1]) >= 1000)) {
             id = numbers[1];
-            boxes = parseInt(numbers[0], 10);
+            qty = parseInt(numbers[0], 10);
         }
 
         let mode: 'IN' | 'OUT' | 'SET' = 'IN';
@@ -158,19 +163,13 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onCommandParsed }) => {
         if (isSet) mode = 'SET';
         if (isKirim) mode = 'IN';
 
+        const autoSubmit = isSaqlash || isExplicitUnit;
+
         if (navigator.vibrate) navigator.vibrate([200]);
-        setFeedback(`✅ Qabul qilindi:\nID ${id} | ${boxes} karobka | ${mode}`);
+        setFeedback(`✅ Qabul qilindi:\nID ${id} | ${qty} ${unit === 'piece' ? 'dona' : 'karobka'} | ${mode}`);
 
         // Execute the parsed command
-        onCommandParsed(id, boxes, mode);
-
-        // Auto trigger submit if keyword perceived
-        if (isSaqlash) {
-            setTimeout(() => {
-                document.dispatchEvent(new Event('voice-submit'));
-            }, 800);
-        }
-
+        onCommandParsed(id, qty, mode, unit, autoSubmit);
         setTimeout(() => setFeedback(''), 3000);
     };
 
