@@ -24,7 +24,8 @@ app.use(express.json());
 // MongoDB connection
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ekspeditor', {
-  serverSelectionTimeoutMS: 3000 // fail fast if db is unreachable
+  serverSelectionTimeoutMS: 3000, // fail fast if db is unreachable
+  family: 4 // Force IPv4 to prevent Docker network DNS resolution issues
 })
   .then(async () => {
     console.log('Connected to MongoDB Atlas');
