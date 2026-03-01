@@ -67,11 +67,11 @@ export default function OstatkaEntry() {
                 const hRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/history', { signal: AbortSignal.timeout(3000) });
                 const historyData = await hRes.json();
 
-                if (Array.isArray(inventoryData) && inventoryData.length > 0) {
+                if (Array.isArray(inventoryData)) {
                     setItems(inventoryData);
                     localStorage.setItem('cached_inventory', JSON.stringify(inventoryData));
                 } else {
-                    throw new Error('Empty database returned');
+                    throw new Error('Invalid data format returned');
                 }
                 if (Array.isArray(historyData)) {
                     setRecentActivity(historyData.slice(0, 5));

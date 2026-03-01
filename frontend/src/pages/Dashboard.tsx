@@ -50,11 +50,11 @@ function Dashboard() {
 
       if (!response.ok) throw new Error('API fetch failed');
       const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         setInventory(data);
         localStorage.setItem('cached_inventory', JSON.stringify(data)); // Save to cache
       } else {
-        throw new Error('Empty database returned');
+        throw new Error('Invalid data format returned');
       }
 
       const historyRes = await fetch((import.meta.env.VITE_API_URL || '') + '/api/history', { signal: AbortSignal.timeout(3000) });

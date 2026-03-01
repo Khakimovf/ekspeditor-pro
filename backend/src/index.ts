@@ -100,7 +100,7 @@ app.get('/api/inventory', async (req, res) => {
     res.status(200).json(items);
   } catch (error) {
     console.error('Inventory fetch failed (DB down?):', error);
-    res.status(200).json([]); // Fallback to allow frontend UI to render
+    res.status(500).json({ error: 'Database connection failed' });
   }
 });
 
@@ -290,7 +290,7 @@ app.get('/api/statistics/stock-dynamics', async (req, res) => {
     res.status(200).json(data);
   } catch (error) {
     console.error('Stock dynamics failed (DB down?):', error);
-    res.status(200).json([]);
+    res.status(500).json({ error: 'Database connection failed' });
   }
 });
 
@@ -301,7 +301,7 @@ app.get('/api/history', async (req, res) => {
     res.status(200).json(history);
   } catch (error) {
     console.error('History fetch failed (DB down?):', error);
-    res.status(200).json([]);
+    res.status(500).json({ error: 'Database connection failed' });
   }
 });
 
