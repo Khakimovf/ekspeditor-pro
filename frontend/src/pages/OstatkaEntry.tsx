@@ -178,11 +178,13 @@ export default function OstatkaEntry() {
 
         const pieces = qBoxes * previewItem.perBox;
 
-        fetch((import.meta.env.VITE_API_URL || '') + '/api/inventory/command', {
+        setIsSyncing(true);
+        resilientFetch((import.meta.env.VITE_API_URL || '') + '/api/inventory/command', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: previewItem.id, type: inputMode, totalPieces: pieces, boxes: qBoxes })
-        }).then(async (res) => {
+        }, 3).then(async (res) => {
+            setIsSyncing(false);
             if (res.ok) {
                 if (navigator.vibrate) navigator.vibrate([200]);
                 playSuccessSound();
@@ -207,8 +209,9 @@ export default function OstatkaEntry() {
                 alert(`Xatolik: ${data.error}`);
             }
         }).catch(() => {
+            setIsSyncing(false);
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            alert("Serverga ulanishda xatolik");
+            alert("Baza uzoq vaqt javob bermadi. Qayta urinib ko'ring.");
         });
     };
 
