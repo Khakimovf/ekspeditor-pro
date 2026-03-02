@@ -19,6 +19,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://207.154.220.197
     container_name: ekspeditor_app
     restart: unless-stopped
     ports:
@@ -26,7 +28,7 @@ services:
     environment:
       - PORT=10000
       - MONGODB_URI=mongodb://root:secure_root_password_change_me@mongodb:27017/ekspeditor?authSource=admin
-      - VITE_API_URL=https://factoryerp.uz
+      - VITE_API_URL=http://207.154.220.197
       - NODE_ENV=production
     depends_on:
       - mongodb
