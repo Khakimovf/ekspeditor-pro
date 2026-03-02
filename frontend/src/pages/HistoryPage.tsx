@@ -24,7 +24,7 @@ export default function HistoryPage() {
 
     const fetchHistory = () => {
         setLoading(true);
-        fetch("https://factoryerp.uz" + '/api/history')
+        fetch("http://factoryerp.uz" + '/api/history')
             .then(res => res.ok ? res.json() : [])
             .then(data => setHistory(Array.isArray(data) ? data : []))
             .catch(() => setHistory([]))
@@ -42,7 +42,7 @@ export default function HistoryPage() {
         if (!window.confirm("Rostdan ham ushbu amalni o'chirish va zaxirani oldingi holatiga qaytarishni xohlaysizmi?")) return;
 
         try {
-            const res = await fetch(`https://factoryerp.uz/api/history/${id}`, { method: 'DELETE' });
+            const res = await fetch(`http://factoryerp.uz/api/history/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 if (navigator.vibrate) navigator.vibrate([200]);
                 alert("Muvaffaqiyatli o'chirildi va zaxira tiklandi!");

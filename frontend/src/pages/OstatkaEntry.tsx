@@ -79,10 +79,10 @@ export default function OstatkaEntry() {
             setErrorVisible(false);
 
             try {
-                const iRes = await resilientFetch("https://factoryerp.uz" + '/api/inventory');
+                const iRes = await resilientFetch("http://factoryerp.uz" + '/api/inventory');
                 const inventoryData = await iRes.json();
 
-                const hRes = await resilientFetch("https://factoryerp.uz" + '/api/history', {}, 1);
+                const hRes = await resilientFetch("http://factoryerp.uz" + '/api/history', {}, 1);
                 const historyData = await hRes.json();
 
                 if (Array.isArray(inventoryData)) {
@@ -179,7 +179,7 @@ export default function OstatkaEntry() {
         const pieces = qBoxes * previewItem.perBox;
 
         setIsSyncing(true);
-        resilientFetch("https://factoryerp.uz" + '/api/inventory/command', {
+        resilientFetch("http://factoryerp.uz" + '/api/inventory/command', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: previewItem.id, type: inputMode, totalPieces: pieces, boxes: qBoxes })
@@ -229,7 +229,7 @@ export default function OstatkaEntry() {
             if (autoSubmit) {
                 // 2. Auto-submit after a brief delay
                 setTimeout(() => {
-                    fetch("https://factoryerp.uz" + '/api/inventory/command', {
+                    fetch("http://factoryerp.uz" + '/api/inventory/command', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ id: item.id, type, totalPieces, boxes: qBoxes })

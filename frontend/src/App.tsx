@@ -20,7 +20,7 @@ function App() {
   // Keep-Alive Ping for Render Free Tier (every 5 minutes)
   useEffect(() => {
     const pingServer = () => {
-      fetch("https://factoryerp.uz" + '/api/health').catch(() => {
+      fetch("http://factoryerp.uz" + '/api/health').catch(() => {
         // silent fail
       });
     };

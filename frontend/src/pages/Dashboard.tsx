@@ -57,7 +57,7 @@ function Dashboard() {
       setIsSyncing(true);
       setErrorVisible(false);
 
-      let fetchUrl = "https://factoryerp.uz" + '/api/inventory';
+      let fetchUrl = "http://factoryerp.uz" + '/api/inventory';
       if (search) {
         fetchUrl += `?search=${encodeURIComponent(search)}`;
       }
@@ -75,7 +75,7 @@ function Dashboard() {
       }
 
       // Chain history fetch reliably
-      const historyRes = await resilientFetch("https://factoryerp.uz" + '/api/history', {}, 1);
+      const historyRes = await resilientFetch("http://factoryerp.uz" + '/api/history', {}, 1);
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         const today = new Date().toISOString().split('T')[0];

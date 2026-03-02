@@ -24,7 +24,7 @@ export default function StockDynamicsChart() {
 
     const fetchStats = async () => {
         try {
-            const response = await fetch("https://factoryerp.uz" + '/api/statistics/stock-dynamics');
+            const response = await fetch("http://factoryerp.uz" + '/api/statistics/stock-dynamics');
             if (response.ok) {
                 const json = await response.json();
                 setData(json);
