@@ -24,7 +24,7 @@ export default function HistoryPage() {
 
     const fetchHistory = () => {
         setLoading(true);
-        fetch((import.meta.env.VITE_API_URL || '') + '/api/history')
+        fetch("https://factoryerp.uz" + '/api/history')
             .then(res => res.ok ? res.json() : [])
             .then(data => setHistory(Array.isArray(data) ? data : []))
             .catch(() => setHistory([]))
@@ -42,7 +42,7 @@ export default function HistoryPage() {
         if (!window.confirm("Rostdan ham ushbu amalni o'chirish va zaxirani oldingi holatiga qaytarishni xohlaysizmi?")) return;
 
         try {
-            const res = await fetch(`\${import.meta.env.VITE_API_URL || ''}/api/history/${id}`, { method: 'DELETE' });
+            const res = await fetch(`https://factoryerp.uz/api/history/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 if (navigator.vibrate) navigator.vibrate([200]);
                 alert("Muvaffaqiyatli o'chirildi va zaxira tiklandi!");
@@ -281,10 +281,10 @@ export default function HistoryPage() {
                                             </td>
                                             <td className="p-5">
                                                 <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-black tracking-wide border ${record.type === 'IN'
-                                                        ? 'bg-emerald-500 text-white border-emerald-600 dark:bg-emerald-600 dark:border-emerald-500 shadow-[0_4px_15px_rgba(16,185,129,0.3)]'
-                                                        : record.type === 'OUT'
-                                                            ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/50 shadow-[0_0_15px_rgba(239,68,68,0.15)]'
-                                                            : 'bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800/50'
+                                                    ? 'bg-emerald-500 text-white border-emerald-600 dark:bg-emerald-600 dark:border-emerald-500 shadow-[0_4px_15px_rgba(16,185,129,0.3)]'
+                                                    : record.type === 'OUT'
+                                                        ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/50 shadow-[0_0_15px_rgba(239,68,68,0.15)]'
+                                                        : 'bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800/50'
                                                     }`}>
                                                     {record.type === 'IN' ? '➕ STOCK IN' : record.type === 'OUT' ? '➖ CHIQIM' : '🔄 OSTATKA'}
                                                 </span>

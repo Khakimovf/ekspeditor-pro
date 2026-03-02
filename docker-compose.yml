@@ -20,7 +20,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=http://207.154.220.197
+        - VITE_API_URL=https://factoryerp.uz
     container_name: ekspeditor_app
     restart: unless-stopped
     ports:
@@ -28,7 +28,7 @@ services:
     environment:
       - PORT=10000
       - MONGODB_URI=mongodb://root:secure_root_password_change_me@mongodb:27017/ekspeditor?authSource=admin
-      - VITE_API_URL=http://207.154.220.197
+      - VITE_API_URL=https://factoryerp.uz
       - NODE_ENV=production
     depends_on:
       - mongodb
@@ -60,7 +60,6 @@ services:
     command: certonly --webroot -w /var/www/certbot --force-renewal --email admin@factoryerp.uz -d factoryerp.uz --agree-tos
     networks:
       - ekspeditor_network
-
 networks:
   ekspeditor_network:
     driver: bridge
